@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import tshwaneLogo from '../../images/tshwane.gif';
 
 const navItems = [
   { to: '/', label: 'Home' },
@@ -16,10 +17,7 @@ function SiteLayout() {
 
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            <span />
-            <span />
-          </div>
+          <img className="brand-mark" src={tshwaneLogo} alt="" aria-hidden="true" />
           <div>
             <p className="eyebrow">A Re Yeng inspired palette</p>
             <h1>Tshwane Bus Services</h1>

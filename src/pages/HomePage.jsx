@@ -43,28 +43,6 @@ function HomePage() {
           </div>
         </div>
       </section>
-
-      <section className="panel journey-panel">
-        <div className="section-heading">
-          <div>
-            <p className="section-tag">User flow</p>
-            <h3>Interactive client journey</h3>
-          </div>
-          <div className="journey-progress" aria-label="Journey progress">
-            <span style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-
-        <div className="workflow-grid">
-          {workflow.map((item, index) => (
-            <article className="workflow-card" key={item.title}>
-              <span className="workflow-index">0{index + 1}</span>
-              <h4>{item.title}</h4>
-              <p>{item.description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
     </>
   );
 }

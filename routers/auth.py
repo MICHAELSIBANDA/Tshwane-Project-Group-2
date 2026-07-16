@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, EmailStr
-from database import MOCK_USER_DB, MockUserRecord
+from sqlmodel import Session, select
+from datetime import datetime, timedelta
+from database import get_db
+from models import Client, OTP, BusCard
 
 router = APIRouter(
     prefix="/api",
-    tags=["Authentication"]
+    tags=["Authentication Engine"]
 )
 
 class RegistrationRequest(BaseModel):
@@ -15,57 +18,58 @@ class RegistrationRequest(BaseModel):
     otp: str = ""
 
 @router.post("/register")
-async def register_or_verify(data: RegistrationRequest):
-    email_key = str(data.contact)
+async def register_or_verify(data: RegistrationRequest, session: Session = Depends(get_db)):
+    email_str = str(data.contact)
 
-    # 1. Processing OTP Validation Submission
+    # STEP 2: The client is submitting their OTP verification pin
     if data.otp:
-        # =================================================================
-        # 🟡 DATABASE PLACEHOLDER: Replace this block with a MySQL SELECT query
-        # =================================================================
-        if email_key not in MOCK_USER_DB:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found.")
+        client_stmt = select(Client).where(Client.Email == email_str)
+        client = session.exec(client_stmt).first()
         
-        user_record = MOCK_USER_DB[email_key]
-        if data.otp != user_record.otp:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OTP code.")
+        if not client:
+            raise HTTPException(status_code=404, detail="Client account not found.")
+            
+        # Verify unused tokens attached to the user record inside your OTP schema table
+        otp_stmt = select(OTP).where(OTP.ClientID == client.ClientID, OTP.IsUsed == False)
+        active_otp = session.exec(otp_stmt).first()
         
-        # Updating memory state
-        user_record.verified = True
-        user_record.journey_progress = 50
-        # =================================================================
-        # 🟡 DATABASE PLACEHOLDER: Run session.add() and session.commit() here
-        # =================================================================
+        if not active_otp or data.otp != active_otp.OTPCode:
+            raise HTTPException(status_code=400, detail="Invalid verification credentials.")
+            
+        # Flip verification configurations in MySQL
+        client.IsVerified = True
+        active_otp.IsUsed = True
+        session.add(client)
+        session.add(active_otp)
+        
+        # Instantiate a brand new default bus card row for this client
+        new_card = BusCard(ClientID=client.ClientID, CardNumber=f"TBS-{client.ClientID}877", Balance=0.00)
+        session.add(new_card)
+        
+        session.commit()
+        return {"status": {"registered": True, "verified": True}, "message": "Profile verified and saved to database!"}
 
-        return {
-            "status": {"registered": True, "verified": True},
-            "message": "Profile successfully verified!"
-        }
+    # STEP 1: The client is submitting registration details for the first time
+    existing_stmt = select(Client).where(Client.Email == email_str)
+    if session.exec(existing_stmt).first():
+        return {"status": {"registered": True, "verified": False}, "message": "Profile already exists. Enter validation PIN."}
 
-    # 2. Processing Initial Account Form Registration
-    # =====================================================================
-    # 🟡 DATABASE PLACEHOLDER: Check if user exists using a MySQL query here
-    # =====================================================================
-    if email_key in MOCK_USER_DB:
-        user_record = MOCK_USER_DB[email_key]
-        return {
-            "status": {"registered": True, "verified": user_record.verified},
-            "message": "Profile already exists. Complete verification."
-        }
-
-    # Creating a new account record
-    MOCK_USER_DB[email_key] = MockUserRecord(
-        firstName=data.firstName,
-        lastName=data.lastName,
-        contact=email_key,
-        idNumber=data.idNumber,
-        journey_progress=25
+    # Insert a fresh record block into your custom MySQL Client table
+    new_client = Client(
+        FirstName=data.firstName,
+        LastName=data.lastName,
+        Email=email_str,
+        IDNumber=data.idNumber,
+        Password="demo_hashed_password",
+        IsVerified=False
     )
-    # =====================================================================
-    # 🟡 DATABASE PLACEHOLDER: Instantiate UserProfile and session.commit() here
-    # =====================================================================
+    session.add(new_client)
+    session.commit()
+    session.refresh(new_client)
 
-    return {
-        "status": {"registered": True, "verified": False},
-        "message": "Registration received. OTP code generated."
-    }
+    # Insert a standard associated temporary record row inside your OTP tracking schema
+    new_otp = OTP(ClientID=new_client.ClientID, OTPCode="246810", ExpiryTime=datetime.utcnow() + timedelta(hours=1))
+    session.add(new_otp)
+    session.commit()
+
+    return {"status": {"registered": True, "verified": False}, "message": "Account created! Demo OTP: 246810 generated."}

@@ -11,7 +11,7 @@ MYSQL_PORT = os.getenv("DB_PORT", "3306")
 MYSQL_DB_NAME = os.getenv("DB_NAME", "tbs_db")
 
 # ⚠️ Change "your_actual_root_password_here" to your true local MySQL password
-MYSQL_PASSWORD = os.getenv("DB_PASSWORD", "your_actual_root_password_here")
+MYSQL_PASSWORD = os.getenv("DB_PASSWORD", "Rea@dc#39")
 
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB_NAME}"
 

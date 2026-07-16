@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import {
   defaultTransactions,
   initialLogin,
@@ -9,11 +9,14 @@ import {
 const AppStateContext = createContext(null);
 
 export function AppStateProvider({ children }) {
+  const [activeUserEmail, setActiveUserEmail] = useState(initialRegistration.contact);
   const [registration, setRegistration] = useState(initialRegistration);
   const [login, setLogin] = useState(initialLogin);
   const [payment, setPayment] = useState(initialPayment);
   const [balance, setBalance] = useState(286.75);
   const [history, setHistory] = useState(defaultTransactions);
+  const [formattedBalance, setFormattedBalance] = useState('R 286.75');
+  const [progress, setProgress] = useState(33);
   const [message, setMessage] = useState({
     title: 'Ready for your next top-up',
     body: 'Register, verify, log in, and complete a top-up in one guided flow.',
@@ -21,8 +24,41 @@ export function AppStateProvider({ children }) {
   });
   const [access, setAccess] = useState({ registered: false, loggedIn: false, verified: false });
 
-  const formattedBalance = useMemo(() => `R ${balance.toFixed(2)}`, [balance]);
-  const progress = access.registered ? (access.loggedIn ? 100 : 66) : 33;
+  function setLocalAccess(nextAccess) {
+    setAccess((current) => ({ ...current, ...nextAccess }));
+  }
+
+  async function fetchWalletSnapshot(email) {
+    try {
+      const response = await fetch(`http://localhost:8000/api/wallet/snapshot?email=${email}`);
+
+      if (!response.ok) {
+        throw new Error('Dashboard metrics mismatch.');
+      }
+
+      const data = await response.json();
+
+      if (typeof data.formattedBalance === 'string') {
+        setFormattedBalance(data.formattedBalance);
+      }
+
+      if (typeof data.progress === 'number') {
+        setProgress(data.progress);
+      }
+
+      if (data.message && typeof data.message === 'object') {
+        setMessage(data.message);
+      }
+    } catch (error) {
+      console.error('Dashboard connection error:', error);
+    }
+  }
+
+  useEffect(() => {
+    if (activeUserEmail) {
+      fetchWalletSnapshot(activeUserEmail);
+    }
+  }, [activeUserEmail]);
 
   function updateRegistration(field, value) {
     setRegistration((current) => ({ ...current, [field]: value }));
@@ -49,7 +85,8 @@ export function AppStateProvider({ children }) {
     }
 
     if (!registration.otp) {
-      setAccess((current) => ({ ...current, registered: true, verified: false }));
+      setLocalAccess({ registered: true, verified: false, loggedIn: false });
+      setProgress(33);
       notify('OTP sent', 'A one-time pin has been dispatched to the registered contact method.', 'success');
       return;
     }
@@ -59,7 +96,9 @@ export function AppStateProvider({ children }) {
       return;
     }
 
-    setAccess((current) => ({ ...current, registered: true, verified: true }));
+    setLocalAccess({ registered: true, verified: true });
+    setActiveUserEmail(registration.contact);
+    setProgress(66);
     notify('Client verified', 'The profile is authenticated and ready for secure login.', 'success');
   }
 
@@ -67,7 +106,7 @@ export function AppStateProvider({ children }) {
     event.preventDefault();
 
     if (!access.verified) {
-      notify('Verify the profile first', 'The user must complete OTP verification before login.', 'warning');
+      notify('Verification required', 'Complete the backend registration and OTP verification before login.', 'warning');
       return;
     }
 
@@ -77,19 +116,20 @@ export function AppStateProvider({ children }) {
     }
 
     if (login.cardNumber !== 'AY-4829-3310' || login.pin !== '2514') {
-      notify('Login failed', 'Credentials do not match the client record in this demo.', 'warning');
+      notify('Login failed', 'The current backend branch does not expose a login endpoint yet, so this page still uses local validation.', 'warning');
       return;
     }
 
-    setAccess((current) => ({ ...current, loggedIn: true }));
-    notify('Welcome back', 'Secure session established. You can now top up the linked bus card.', 'success');
+    setLocalAccess({ loggedIn: true });
+    setProgress(100);
+    notify('Session ready', 'Login is currently frontend-gated until the backend adds a login route.', 'success');
   }
 
   function handleTopUp(event) {
     event.preventDefault();
 
     if (!access.loggedIn) {
-      notify('Login required', 'Authenticate before starting a top-up.', 'warning');
+      notify('Login required', 'Login is still frontend-gated because the backend branch does not expose a top-up route yet.', 'warning');
       return;
     }
 
@@ -105,15 +145,17 @@ export function AppStateProvider({ children }) {
 
     const nextBalance = balance + Number(payment.amount);
     setBalance(nextBalance);
+    setFormattedBalance(`R ${nextBalance.toFixed(2)}`);
     setHistory((current) => [
       { label: 'Top-up approved', amount: `+ R ${Number(payment.amount).toFixed(2)}`, tone: 'success' },
       { label: 'Updated balance', amount: `R ${nextBalance.toFixed(2)}`, tone: 'accent' },
       ...current,
     ]);
-    notify('Payment approved', `R ${Number(payment.amount).toFixed(2)} has been credited to the bus card balance.`, 'success');
+    notify('Payment approved', `R ${Number(payment.amount).toFixed(2)} has been credited locally. The backend branch still needs a top-up endpoint to persist it.`, 'success');
   }
 
   const value = {
+    activeUserEmail,
     registration,
     login,
     payment,

@@ -1,7 +1,7 @@
 import { useAppState } from '../AppState';
 
 function LoginPage() {
-  const { access, login, handleLogin, updateLogin } = useAppState();
+  const { access, login, handleLogin, updateLogin, message } = useAppState();
 
   return (
     <section className="panel form-panel single-page-panel">
@@ -32,6 +32,7 @@ function LoginPage() {
         <button className="button button-secondary" type="submit">
           Log in
         </button>
+        <p className="page-note">{message.body}</p>
       </form>
     </section>
   );

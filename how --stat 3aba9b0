@@ -1,0 +1,5 @@
+[33m3aba9b0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mback-end[m[33m, [m[1;31morigin/back-end[m[33m)[m Update compiled database bytecode file
+[33m1469411[m Refactor database connection and models; implement wallet API with client and bus card integration
+[33md4c7262[m Add initial database schema with tables for Client, OTP, Notification, BusCard, BankCard, and Transaction
+[33m138cb54[m Implement initial database models and API routes for user registration and wallet management
+[33m56680e8[m Removal of main.py file

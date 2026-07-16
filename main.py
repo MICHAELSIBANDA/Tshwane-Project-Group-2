@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import wallet
-
+from routers import wallet, auth
 app = FastAPI(title="Tshwane Bus Services - API Management Dashboard")
 
 # Configure Cross-Origin Resource Sharing (CORS)
@@ -15,3 +14,4 @@ app.add_middleware(
 
 # Bind modular routers
 app.include_router(wallet.router)
+app.include_router(auth.router)

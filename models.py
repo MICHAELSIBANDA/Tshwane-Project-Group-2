@@ -33,3 +33,12 @@ class Notification(SQLModel, table=True):
     Message: str = Field(max_length=255)
     DateSent: datetime = Field(default_factory=datetime.utcnow)
     Status: str = Field(default="Sent", max_length=20)
+
+class OTP(SQLModel, table=True):
+    __tablename__ = "OTP"
+    
+    OTPID: Optional[int] = Field(default=None, primary_key=True)
+    ClientID: int = Field(foreign_key="Client.ClientID")
+    OTPCode: str = Field(max_length=6)
+    DateGenerated: datetime = Field(default_factory=datetime.utcnow)
+    IsUsed: bool = Field(default=False)

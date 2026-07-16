@@ -20,9 +20,6 @@ function HomePage() {
             <Link className="button button-primary" to="/register">
               Start the journey
             </Link>
-            <Link className="button button-secondary" to="/scope">
-              Review scope
-            </Link>
           </div>
         </div>
 

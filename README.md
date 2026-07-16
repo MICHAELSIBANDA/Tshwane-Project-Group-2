@@ -31,7 +31,6 @@ npm.cmd run preview
 - `/register` Registration
 - `/login` Authentication
 - `/top-up` Account top-up
-- `/scope` Project scope
 
 ## Notes
 - On Windows PowerShell, use `npm.cmd` instead of plain `npm` if script execution policy blocks the shim.

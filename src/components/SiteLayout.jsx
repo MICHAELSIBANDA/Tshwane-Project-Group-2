@@ -6,7 +6,6 @@ const navItems = [
   { to: '/register', label: 'Register' },
   { to: '/login', label: 'Login' },
   { to: '/top-up', label: 'Top up' },
-  { to: '/scope', label: 'Scope' },
 ];
 
 function SiteLayout() {

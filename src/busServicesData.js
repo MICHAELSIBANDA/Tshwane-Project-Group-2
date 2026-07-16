@@ -17,23 +17,6 @@ export const workflow = [
   },
 ];
 
-export const scopeItems = {
-  included: [
-    'User registration with OTP verification',
-    'Secure login for existing clients',
-    'Electronic bus card top-up flow',
-    'Bank API payment authorization',
-    'Linked bus card balance updates',
-  ],
-  excluded: [
-    'Trip planning, routes, or live tracking',
-    'Physical ticketing or terminal validation',
-    'Admin dashboards and reporting tools',
-    'Cash payments or manual wallet top-ups',
-    'Refund and dispute resolution automation',
-  ],
-};
-
 export const defaultTransactions = [
   { label: 'Card linked', amount: 'AY-4829-3310', tone: 'success' },
   { label: 'Previous balance', amount: 'R 286.75', tone: 'muted' },

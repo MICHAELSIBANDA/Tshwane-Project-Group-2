@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #f6f7f3;
+  --bg: #2f8f32;
   --surface: rgba(255, 255, 255, 0.92);
   --surface-strong: #ffffff;
   --text: #202328;
@@ -8,9 +8,9 @@
   --line: rgba(58, 70, 54, 0.14);
   --blue: #42a9d8;
   --blue-deep: #1c8cc7;
-  --green: #69b54d;
-  --green-deep: #5aa53f;
-  --green-soft: #eaf6de;
+  --green: #32cd32;
+  --green-deep: #32cd32;
+  --green-soft: #e6ffe6;
   --sun: #f4c11d;
   --accent: #d8eef7;
   --shadow: 0 24px 80px rgba(41, 63, 44, 0.12);
@@ -33,10 +33,7 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--text);
-  background:
-    radial-gradient(circle at top left, rgba(66, 169, 216, 0.16), transparent 30%),
-    radial-gradient(circle at top right, rgba(105, 181, 77, 0.16), transparent 28%),
-    linear-gradient(180deg, #fbfcfa 0%, #f6f7f3 100%);
+  background: var(--bg);
 }
 
 body::before {
@@ -94,13 +91,13 @@ a {
 .backdrop-left {
   top: 80px;
   left: -120px;
-  background: rgba(66, 169, 216, 0.28);
+  background: rgba(50, 205, 50, 0.18);
 }
 
 .backdrop-right {
   top: 320px;
   right: -140px;
-  background: rgba(105, 181, 77, 0.22);
+  background: rgba(50, 205, 50, 0.12);
 }
 
 .topbar,
@@ -124,8 +121,8 @@ a {
   gap: 10px;
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(74, 86, 115, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.24);
 }
 
 .nav-link {
@@ -143,7 +140,7 @@ a {
 .nav-link:hover,
 .nav-link-active {
   color: var(--text);
-  background: rgba(210, 216, 255, 0.7);
+  background: rgba(47, 143, 132, 0.16);
 }
 
 .brand {
@@ -156,32 +153,11 @@ a {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  background: linear-gradient(145deg, var(--blue), var(--green));
+  background: #ffffff;
   box-shadow: var(--shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.brand-mark span:first-child,
-.brand-mark span:last-child {
-  position: absolute;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.brand-mark span:first-child {
-  width: 28px;
-  height: 8px;
-  left: 15px;
-  top: 18px;
-}
-
-.brand-mark span:last-child {
-  width: 20px;
-  height: 20px;
-  right: 12px;
-  bottom: 12px;
-  background: rgba(255, 255, 255, 0.82);
+  object-fit: contain;
+  object-position: center;
+  padding: 4px;
 }
 
 .eyebrow,
@@ -219,8 +195,9 @@ a {
 .card-header,
 .balance-ring,
 .info-card {
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.93);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
 
@@ -335,15 +312,15 @@ a {
 }
 
 .button-primary {
-  color: #fff;
-  background: linear-gradient(135deg, var(--blue-deep), var(--green-deep));
-  box-shadow: 0 18px 36px rgba(28, 140, 199, 0.22);
+  color: #1f2a10;
+  background: linear-gradient(135deg, #fff600, #fff600);
+  box-shadow: 0 18px 36px rgba(255, 246, 0, 0.24);
 }
 
 .button-secondary {
-  color: var(--text);
-  background: #f5faf7;
-  border: 1px solid rgba(28, 140, 199, 0.16);
+  color: #1f2a10;
+  background: linear-gradient(135deg, #fff600, #fff600);
+  border: 1px solid rgba(255, 246, 0, 0.6);
 }
 
 .hero-card {
@@ -530,7 +507,7 @@ select:focus {
 
 .pill-success {
   color: var(--green);
-  background: rgba(234, 246, 222, 0.92);
+  background: rgba(230, 255, 230, 0.96);
 }
 
 .pill-accent {
@@ -554,8 +531,8 @@ select:focus {
 }
 
 .amount-chip-active {
-  color: #fff;
-  background: linear-gradient(135deg, var(--blue-deep), var(--green-deep));
+  color: #1f2a10;
+  background: linear-gradient(135deg, #fff600, #fff600);
 }
 
 .accent-panel {
@@ -604,32 +581,6 @@ select:focus {
   background: rgba(249, 250, 247, 0.9);
 }
 
-.scope-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.scope-box {
-  padding: 20px;
-  border-radius: var(--radius-lg);
-}
-
-.scope-included {
-  background: rgba(234, 246, 222, 0.9);
-}
-
-.scope-excluded {
-  background: rgba(216, 238, 247, 0.84);
-}
-
-.scope-box ul {
-  margin: 14px 0 0;
-  padding-left: 18px;
-}
-
-.scope-box li + li {
-  margin-top: 10px;
-}
-
 .info-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -648,7 +599,6 @@ select:focus {
   .hero,
   .workflow-grid,
   .grid-two,
-  .scope-grid,
   .info-grid {
     grid-template-columns: 1fr;
   }

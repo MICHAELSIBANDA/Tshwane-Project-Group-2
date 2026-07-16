@@ -2,7 +2,7 @@ import { paymentMethods } from '../busServicesData';
 import { useAppState } from '../AppState';
 
 function TopUpPage() {
-  const { access, formattedBalance, payment, handleTopUp, updatePayment } = useAppState();
+  const { access, formattedBalance, payment, handleTopUp, updatePayment, message } = useAppState();
 
   return (
     <section className="grid-two single-page-grid">
@@ -69,6 +69,7 @@ function TopUpPage() {
           <button className="button button-primary" type="submit">
             Authorize payment
           </button>
+          <p className="page-note">{message.body}</p>
         </form>
       </article>
 

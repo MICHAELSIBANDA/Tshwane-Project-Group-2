@@ -10,10 +10,11 @@ function HomePage() {
       <section className="hero panel">
         <div className="hero-copy">
           <p className="section-tag">Digital bus card management</p>
-          <h2>Register, log in, and top up a Tshwane Bus Card.</h2>
+          <h2>Connecting the Capital.</h2>
           <p className="hero-text">
-            This frontend prototype focuses on the in-scope client journey: secure sign-up, OTP verification,
-            authentication, payment processing, and balance updates for a linked bus card.
+            Welcome to the Tshwane Bus Services self-service portal. Here, you can manage your bus card account,
+             authenticating, and topping up a linked bus card balance.The City offers a transport service to all
+              Tshwane residents. In order to use the service, commuters have to get a Connector card, which enables them to board City of Tshwane buses, namely Tshwane Bus Services (TBS) and A Re Yeng. The City no longer accepts cash or paper tickets on any of its buses.
           </p>
 
           <div className="hero-actions">

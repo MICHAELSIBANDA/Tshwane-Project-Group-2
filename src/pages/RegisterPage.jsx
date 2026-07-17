@@ -57,6 +57,17 @@ function RegisterPage() {
           )}
         </label>
 
+        <label>
+          Phone number
+          <input 
+            value={registration.phoneNumber} 
+            onChange={(event) => updateRegistration('phoneNumber', event.target.value)} 
+            type="tel" 
+            placeholder="e.g., +27 123 456 7890" 
+            required 
+          />
+        </label>
+
         {/* Defensive Guard: Password Strength Check */}
         <label>
           Account Password

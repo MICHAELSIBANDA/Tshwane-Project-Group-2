@@ -73,6 +73,9 @@ function LoginPage() {
         </button>
 
         <p className="page-note" style={{ transition: 'color 0.2s ease' }}>{message.body}</p>
+        <p className="page-note" style={{ marginTop: '8px' }}>
+          Demo login: <strong>demo@tshwane.co.za</strong> / <strong>Demo1234!</strong>
+        </p>
       </form>
     </section>
   );

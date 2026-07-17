@@ -2,16 +2,20 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useAppState } from '../AppState';
 import tshwaneLogo from '../../images/tshwane.gif';
 
-const navItems = [
-  { to: '/', label: 'Home' },
-  { to: '/register', label: 'Register' },
+const guestNavItems = [
   { to: '/login', label: 'Login' },
+  { to: '/register', label: 'Register' },
+];
+
+const authNavItems = [
+  { to: '/', label: 'Home' },
   { to: '/top-up', label: 'Top up' },
 ];
 
 function SiteLayout() {
   const { access, handleLogout } = useAppState();
   const isLoggedIn = access.loggedIn && access.user;
+  const navItems = isLoggedIn ? authNavItems : guestNavItems;
 
   return (
     <div className="shell">
@@ -54,7 +58,7 @@ function SiteLayout() {
               </button>
             </div>
           ) : (
-            'Client self-service portal'
+            'Guest access'
           )}
         </div>
       </header>

@@ -3,6 +3,7 @@ import { useAppState } from '../AppState';
 
 function TopUpPage() {
   const { access, formattedBalance, payment, handleTopUp, updatePayment, message } = useAppState();
+  const linkedCardNumber = access.user?.cardNumber ?? 'No bus card linked yet';
 
   return (
     <section className="grid-two single-page-grid">
@@ -87,7 +88,7 @@ function TopUpPage() {
         <div className="summary-card">
           <div>
             <span>Bus card</span>
-            <strong>AY-4829-3310</strong>
+            <strong>{linkedCardNumber}</strong>
           </div>
           <div>
             <span>Balance</span>

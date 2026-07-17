@@ -2,26 +2,44 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppStateContext = createContext();
 
+<<<<<<< HEAD
+=======
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+
+const defaultAccess = {
+  registered: false,
+  verified: false,
+  loggedIn: false,
+  user: null,
+};
+
+const defaultMessage = {
+  title: 'Ready to start',
+  body: 'Log in or register to load your wallet snapshot from the backend.',
+  tone: 'muted',
+};
+
+async function readErrorMessage(response) {
+  try {
+    const errorData = await response.json();
+    return errorData.detail || errorData.message || 'Unknown server error.';
+  } catch {
+    return 'Unknown server error.';
+  }
+}
+
+>>>>>>> eb158c0 (feat: implement conditional navigation and auth route gaurds for Home and Top Up)
 export function AppStateProvider({ children }) {
   // Session tracking: maps to the active verified client's email context
-  const [activeUserEmail, setActiveUserEmail] = useState("user@example.com");
+  const [activeUserEmail, setActiveUserEmail] = useState(null);
 
   // HomePage dashboard visualization metrics
   const [progress, setProgress] = useState(0);
   const [formattedBalance, setFormattedBalance] = useState("R 0.00");
-  const [message, setMessage] = useState({ 
-    title: "Loading...", 
-    body: "Awaiting system processing initialization.", 
-    tone: "muted" 
-  });
+  const [message, setMessage] = useState(defaultMessage);
 
   // Client lifecycle workflow session status flags
-  const [access, setAccess] = useState({ 
-    registered: false, 
-    verified: false, 
-    loggedIn: false,
-    user: null // User object containing name, email, and card number from authentication
-  });
+  const [access, setAccess] = useState(defaultAccess);
 
   // RegisterPage input attributes (Maps to custom Client table schema)
   const [registration, setRegistration] = useState({ 
@@ -63,11 +81,24 @@ export function AppStateProvider({ children }) {
     setLogin(prev => ({ ...prev, [field]: value }));
   };
 
+  const persistSession = (nextAccess, nextUser) => {
+    localStorage.setItem('appUser', JSON.stringify(nextUser));
+    localStorage.setItem('appAccess', JSON.stringify(nextAccess));
+  };
+
+  const applySessionUpdate = (nextAccess, nextUser) => {
+    setAccess(nextAccess);
+    setActiveUserEmail(nextUser?.email ?? null);
+    persistSession(nextAccess, nextUser);
+  };
+
   // --- 1. DYNAMIC REFRESH FOR DASHBOARD COMPONENT METRICS ---
   const fetchWalletSnapshot = async (email) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/wallet/snapshot?email=${email}`);
-      if (!response.ok) throw new Error("Dashboard metrics schema parsing breakdown.");
+      const response = await fetch(`${API_BASE_URL}/api/wallet/snapshot?email=${encodeURIComponent(email)}`);
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+      }
       
       const data = await response.json();
       setFormattedBalance(data.formattedBalance);
@@ -75,6 +106,7 @@ export function AppStateProvider({ children }) {
       setMessage(data.message);
     } catch (error) {
       console.error("Dashboard connection sync error:", error);
+      setMessage(defaultMessage);
     }
   };
 
@@ -94,10 +126,14 @@ export function AppStateProvider({ children }) {
       try {
         const parsedUser = JSON.parse(storedUser);
         const parsedAccess = JSON.parse(storedAccess);
-        
-        // Restore user session state from persistent storage
-        setAccess(prev => ({ ...parsedAccess, registered: prev.registered, verified: prev.verified }));
-        setActiveUserEmail(parsedUser.email);
+        const restoredAccess = {
+          ...defaultAccess,
+          ...parsedAccess,
+          user: parsedAccess.user ?? parsedUser,
+        };
+
+        setAccess(restoredAccess);
+        setActiveUserEmail(parsedUser?.email ?? restoredAccess.user?.email ?? null);
       } catch (error) {
         console.error("Session restoration error - localStorage corruption detected:", error);
         // Clear corrupted data and require fresh login
@@ -123,7 +159,7 @@ export function AppStateProvider({ children }) {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/register", {
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,8 +174,8 @@ export function AppStateProvider({ children }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Database Server Rejection:\n${errorData.detail}`);
+        const errorMessage = await readErrorMessage(response);
+        alert(`Database Server Rejection:\n${errorMessage}`);
         return;
       }
 
@@ -151,7 +187,7 @@ export function AppStateProvider({ children }) {
       if (data.status.verified) {
         setActiveUserEmail(registration.contact);
       }
-      
+
       alert(data.message);
     } catch (error) {
       console.error("Registration network interface exception:", error);
@@ -163,34 +199,90 @@ export function AppStateProvider({ children }) {
   const handleTopUp = async (event) => {
     event.preventDefault();
 
-    if (!payment.amount || !payment.cardNumber) {
+    if (!access.loggedIn || !access.user?.email) {
+      alert("Please log in before attempting a top-up.");
+      return;
+    }
+
+    const needsNewBankCard = !access.user.bankCardId;
+
+    if (!payment.amount || (needsNewBankCard && !payment.cardNumber)) {
       alert("Please complete the payment fields before proceeding.");
       return;
     }
 
     // 🛑 DEFENSIVE GUARD: Enforce maximum sizes matching BankCard and Transaction schema fields
-    if (payment.cardNumber.length < 12 || payment.cardNumber.length > 20) {
+    if (needsNewBankCard && (payment.cardNumber.length < 12 || payment.cardNumber.length > 20)) {
       alert("Defensive Programming Guard:\nSubmission rejected. Bank Card Number size must sit between 12 and 20 digits to remain compliant with database constraints.");
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/wallet/topup", {
+      const email = access.user.email;
+      let bankCardId = access.user.bankCardId;
+
+      if (!access.user.cardNumber) {
+        const linkResponse = await fetch(`${API_BASE_URL}/api/wallet/link-card`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contact: email }),
+        });
+
+        if (!linkResponse.ok) {
+          const errorMessage = await readErrorMessage(linkResponse);
+          if (!errorMessage.toLowerCase().includes('already has a linked bus card')) {
+            alert(`Bus Card Setup Failure:\n${errorMessage}`);
+            return;
+          }
+        } else {
+          const linkData = await linkResponse.json();
+          const updatedUser = { ...access.user, cardNumber: linkData.cardNumber };
+          const updatedAccess = { ...access, user: updatedUser };
+          setAccess(updatedAccess);
+          persistSession(updatedAccess, updatedUser);
+        }
+      }
+
+      if (!bankCardId) {
+        const addCardResponse = await fetch(`${API_BASE_URL}/api/wallet/add-bank-card`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contact: email,
+            cardNumber: payment.cardNumber,
+            cardHolderName: payment.cardHolder,
+            expiryDate: payment.expiry,
+            bankName: payment.method,
+          }),
+        });
+
+        if (!addCardResponse.ok) {
+          const errorMessage = await readErrorMessage(addCardResponse);
+          alert(`Bank Card Setup Failure:\n${errorMessage}`);
+          return;
+        }
+
+        const addCardData = await addCardResponse.json();
+        bankCardId = addCardData.bankCardId;
+        const updatedUser = { ...access.user, bankCardId };
+        const updatedAccess = { ...access, user: updatedUser };
+        setAccess(updatedAccess);
+        persistSession(updatedAccess, updatedUser);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/wallet/topup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: activeUserEmail,
+          contact: email,
           amount: parseFloat(payment.amount),
-          cardHolder: payment.cardHolder,
-          cardNumber: payment.cardNumber,
-          expiry: payment.expiry,
-          method: payment.method
+          bankCardId,
         })
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        alert(`Payment Transaction Failure:\n${err.detail}`);
+        const errorMessage = await readErrorMessage(response);
+        alert(`Payment Transaction Failure:\n${errorMessage}`);
         return;
       }
 
@@ -244,6 +336,54 @@ export function AppStateProvider({ children }) {
       console.error("Login network error:", error);
       alert("Could not reach the backend server.");
     }
+<<<<<<< HEAD
+=======
+
+    if (login.password.length < 6) {
+      alert("Defensive Programming Guard:\nPassword must be at least 6 characters long.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contact: login.contact,
+          password: login.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorMessage = await readErrorMessage(response);
+        alert(`Authentication Failure:\n${errorMessage}`);
+        return;
+      }
+
+      const data = await response.json();
+      const userData = data.user ?? {
+        name: login.contact.split('@')[0],
+        email: login.contact,
+        cardNumber: null,
+      };
+      const nextAccess = {
+        ...access,
+        ...data.status,
+        loggedIn: true,
+        user: userData,
+      };
+
+      applySessionUpdate(nextAccess, userData);
+
+      alert(`Authentication Success:\nWelcome back, ${userData.name}! Your session has been restored.`);
+    
+    // Clear password memory configurations cleanly upon authorization approval
+    setLogin({ contact: '', password: '' });
+    } catch (error) {
+      console.error("Authentication network exception:", error);
+      alert("Could not reach the local FastAPI backend server application gateway.");
+    }
+>>>>>>> eb158c0 (feat: implement conditional navigation and auth route gaurds for Home and Top Up)
   };
 
   // --- 4b. LOGOUT HANDLER ---
@@ -254,14 +394,13 @@ export function AppStateProvider({ children }) {
     localStorage.removeItem('appAccess');
     
     // Reset session state
-    setAccess(prev => ({ 
-      ...prev, 
-      loggedIn: false, 
-      user: null 
-    }));
+    setAccess(defaultAccess);
+    setProgress(0);
+    setFormattedBalance("R 0.00");
     
-    setActiveUserEmail("user@example.com");
+    setActiveUserEmail(null);
     setLogin({ contact: '', password: '' });
+    setMessage(defaultMessage);
     
     alert("You have been logged out successfully.");
   };

@@ -81,6 +81,12 @@ async def register_or_verify(data: RegistrationRequest, db: Session = Depends(ge
             db.add(new_otp)
             db.commit()
 
+            send_email(
+                to_address=email_key,
+                subject="Your Tshwane Bus Services OTP",
+                body=f"Hi {existing_client.FirstName},\n\nYour new OTP code is: {otp_code}\n\nUse this to verify your account."
+            )
+
         return {
             "status": {"registered": True, "verified": existing_client.IsVerified},
             "message": "Profile already exists. Complete verification."

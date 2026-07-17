@@ -12,7 +12,7 @@ function LoginPage() {
     <section className="panel form-panel single-page-panel">
       <div className="section-heading compact">
         <div>
-          <p className="section-tag">Login</p>
+          <p className="section-tag"></p>
           <h3>Secure access to the linked account</h3>
         </div>
         <span className={`pill ${access.loggedIn ? 'pill-success' : 'pill-muted'}`}>

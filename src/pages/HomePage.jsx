@@ -9,12 +9,13 @@ function HomePage() {
     <>
       <section className="hero panel">
         <div className="hero-copy">
-          <p className="section-tag">Digital bus card management</p>
+          <p className="section-tag">Bus card management</p>
           <h2>Connecting the Capital.</h2>
           <p className="hero-text">
-            Welcome to the Tshwane Bus Services self-service portal. Here, you can manage your bus card account,
-             authenticating, and topping up a linked bus card balance.The City offers a transport service to all
-              Tshwane residents. In order to use the service, commuters have to get a Connector card, which enables them to board City of Tshwane buses, namely Tshwane Bus Services (TBS) and A Re Yeng. The City no longer accepts cash or paper tickets on any of its buses.
+          Welcome to the Tshwane Bus Services self-service portal.
+          Manage your Connector card, check your balance, and top up all in one place.
+
+          The City of Tshwane no longer accepts cash or paper tickets. To ride any TBS or A Re Yeng bus, simply get a Connector card, load it with funds, and tap to board. It's quick, safe, and easy.
           </p>
 
           <div className="hero-actions">

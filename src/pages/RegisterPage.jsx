@@ -12,7 +12,7 @@ function RegisterPage() {
     <section className="panel form-panel single-page-panel">
       <div className="section-heading compact">
         <div>
-          <p className="section-tag">Sign-up</p>
+          <p className="section-tag"></p>
           <h3>Create a verified client profile</h3>
         </div>
         <span className={`pill ${access.registered ? 'pill-success' : 'pill-muted'}`}>

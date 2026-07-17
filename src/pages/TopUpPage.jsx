@@ -9,10 +9,10 @@ function TopUpPage() {
       <article className="panel form-panel accent-panel">
         <div className="section-heading compact">
           <div>
-            <p className="section-tag">Top up</p>
+            <p className="section-tag"></p>
             <h3>Process a payment and update the card balance</h3>
           </div>
-          <span className="pill pill-accent">Bank API simulated</span>
+          <span className="pill pill-accent"></span>
         </div>
 
         <form className="stack" onSubmit={handleTopUp}>
@@ -76,7 +76,7 @@ function TopUpPage() {
       <article className="panel summary-panel single-page-panel">
         <div className="section-heading compact">
           <div>
-            <p className="section-tag">Account summary</p>
+            <p className="section-tag"></p>
             <h3>Linked bus card and recent transactions</h3>
           </div>
           <span className={`pill ${access.loggedIn ? 'pill-success' : 'pill-muted'}`}>

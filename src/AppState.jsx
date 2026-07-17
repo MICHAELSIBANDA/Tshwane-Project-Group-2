@@ -2,6 +2,29 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppStateContext = createContext();
 
+// 🛡️ MOCK DATABASE: Sample user profiles for authentication testing
+// Maps email addresses to user profiles containing authentication and display data
+const MOCK_USER_DATABASE = {
+  'john.doe@example.com': {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    password: 'password123', // In production, passwords would be hashed
+    cardNumber: '4532-1234-5678-9010'
+  },
+  'jane.smith@example.com': {
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    password: 'secure456', // In production, passwords would be hashed
+    cardNumber: '5425-2234-3456-7890'
+  },
+  'michael.johnson@example.com': {
+    name: 'Michael Johnson',
+    email: 'michael.johnson@example.com',
+    password: 'mysecure789', // In production, passwords would be hashed
+    cardNumber: '3782-822463-10005'
+  }
+};
+
 export function AppStateProvider({ children }) {
   // Session tracking: maps to the active verified client's email context
   const [activeUserEmail, setActiveUserEmail] = useState("user@example.com");
@@ -19,7 +42,8 @@ export function AppStateProvider({ children }) {
   const [access, setAccess] = useState({ 
     registered: false, 
     verified: false, 
-    loggedIn: false 
+    loggedIn: false,
+    user: null // User object containing name, email, and card number from authentication
   });
 
   // RegisterPage input attributes (Maps to custom Client table schema)
@@ -27,6 +51,7 @@ export function AppStateProvider({ children }) {
     firstName: '', 
     lastName: '', 
     contact: '', // VARCHAR(100)
+    phoneNumber: '', // Phone number field
     idNumber: '', // VARCHAR(13)
     password: '', // VARCHAR(255)
     otp: '' 
@@ -82,6 +107,29 @@ export function AppStateProvider({ children }) {
     }
   }, [activeUserEmail]);
 
+  // --- 1b. RESTORE SESSION FROM LOCALSTORAGE ON MOUNT ---
+  // Defensive Guard: Automatically re-authenticate users with valid stored tokens
+  useEffect(() => {
+    const storedUser = localStorage.getItem('appUser');
+    const storedAccess = localStorage.getItem('appAccess');
+    
+    if (storedUser && storedAccess) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        const parsedAccess = JSON.parse(storedAccess);
+        
+        // Restore user session state from persistent storage
+        setAccess(prev => ({ ...parsedAccess, registered: prev.registered, verified: prev.verified }));
+        setActiveUserEmail(parsedUser.email);
+      } catch (error) {
+        console.error("Session restoration error - localStorage corruption detected:", error);
+        // Clear corrupted data and require fresh login
+        localStorage.removeItem('appUser');
+        localStorage.removeItem('appAccess');
+      }
+    }
+  }, []);
+
   // --- 2. DEFENSIVE DISPATCH FOR USER REGISTRATION PIPELINE ---
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -105,6 +153,7 @@ export function AppStateProvider({ children }) {
           firstName: registration.firstName,
           lastName: registration.lastName,
           contact: registration.contact,
+          phoneNumber: registration.phoneNumber,
           idNumber: registration.idNumber,
           password: registration.password,
           otp: registration.otp
@@ -183,6 +232,7 @@ export function AppStateProvider({ children }) {
   };
 
   // --- 4. DEFENSIVE DISPATCH FOR EMAIL & SECURE PASSWORD USER AUTHENTICATION (LOGIN) ---
+  // Uses mock database for development; in production integrates with backend API
   const handleLogin = async (event) => {
     event.preventDefault();
 
@@ -197,38 +247,65 @@ export function AppStateProvider({ children }) {
       return;
     }
 
-    try {
-      const response = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact: login.contact,   // Maps directly to your backend LoginRequest model validation attributes
-          password: login.password  // Maps directly to your backend LoginRequest model validation attributes
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Authentication Failure:\n${errorData.detail}`);
-        return;
-      }
-
-      const data = await response.json();
-      
-      // Toggle session permissions
-      setAccess(prev => ({ ...prev, loggedIn: true }));
-      
-      // Point live session context to the target user account returned from your MySQL schema join lookup
-      setActiveUserEmail(data.email);
-      
-      alert(data.message);
-      
-      // Clear password memory configurations cleanly upon authorization approval
-      setLogin({ contact: '', password: '' });
-    } catch (error) {
-      console.error("Secure authorization pipeline exception:", error);
-      alert("Unable to safely reach the backend core authentication engine gateway.");
+    if (login.password.length < 6) {
+      alert("Defensive Programming Guard:\nPassword must be at least 6 characters long.");
+      return;
     }
+
+    // 🛡️ MOCK AUTHENTICATION: Check credentials against mock database
+    const userRecord = MOCK_USER_DATABASE[login.contact];
+
+    if (!userRecord) {
+      alert("Authentication Failure:\nEmail address not found in system database. Please register first or check your email.");
+      return;
+    }
+
+    if (userRecord.password !== login.password) {
+      alert("Authentication Failure:\nPassword does not match our stored records for this email address.");
+      return;
+    }
+
+    // ✅ AUTHENTICATION SUCCESS: Extract user data and update session state
+    const userData = {
+      name: userRecord.name,
+      email: userRecord.email,
+      cardNumber: userRecord.cardNumber
+    };
+
+    // 🛡️ PERSISTENT STORAGE: Save user session to localStorage for automatic restoration
+    localStorage.setItem('appUser', JSON.stringify(userData));
+    localStorage.setItem('appAccess', JSON.stringify({ loggedIn: true }));
+
+    // Toggle session permissions and store user profile
+    setAccess(prev => ({ ...prev, loggedIn: true, user: userData }));
+    
+    // Point live session context to the target user account
+    setActiveUserEmail(userData.email);
+    
+    alert(`Authentication Success:\nWelcome back, ${userData.name}! Your session has been restored.`);
+    
+    // Clear password memory configurations cleanly upon authorization approval
+    setLogin({ contact: '', password: '' });
+  };
+
+  // --- 4b. LOGOUT HANDLER ---
+  // Clears user session from state and localStorage
+  const handleLogout = () => {
+    // Clear persistent storage
+    localStorage.removeItem('appUser');
+    localStorage.removeItem('appAccess');
+    
+    // Reset session state
+    setAccess(prev => ({ 
+      ...prev, 
+      loggedIn: false, 
+      user: null 
+    }));
+    
+    setActiveUserEmail("user@example.com");
+    setLogin({ contact: '', password: '' });
+    
+    alert("You have been logged out successfully.");
   };
 
   return (
@@ -245,7 +322,8 @@ export function AppStateProvider({ children }) {
       handleTopUp, 
       login, 
       updateLogin, 
-      handleLogin 
+      handleLogin,
+      handleLogout
     }}>
       {children}
     </AppStateContext.Provider>

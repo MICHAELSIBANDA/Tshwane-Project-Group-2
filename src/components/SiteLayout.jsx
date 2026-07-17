@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useAppState } from '../AppState';
 import tshwaneLogo from '../../images/tshwane.gif';
 
 const navItems = [
@@ -9,6 +10,9 @@ const navItems = [
 ];
 
 function SiteLayout() {
+  const { access, handleLogout } = useAppState();
+  const isLoggedIn = access.loggedIn && access.user;
+
   return (
     <div className="shell">
       <div className="backdrop backdrop-left" />
@@ -31,7 +35,27 @@ function SiteLayout() {
         </nav>
         <div className="topbar-chip">
           <span className="chip-dot" />
-          Client self-service portal
+          {isLoggedIn ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span>{access.user.name}</span>
+              <button 
+                onClick={handleLogout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  textDecoration: 'underline',
+                  padding: 0
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            'Client self-service portal'
+          )}
         </div>
       </header>
 

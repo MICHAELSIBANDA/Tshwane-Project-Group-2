@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppStateContext = createContext();
 
-<<<<<<< HEAD
-=======
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 const defaultAccess = {
@@ -28,7 +26,6 @@ async function readErrorMessage(response) {
   }
 }
 
->>>>>>> eb158c0 (feat: implement conditional navigation and auth route gaurds for Home and Top Up)
 export function AppStateProvider({ children }) {
   // Session tracking: maps to the active verified client's email context
   const [activeUserEmail, setActiveUserEmail] = useState(null);
@@ -112,6 +109,10 @@ export function AppStateProvider({ children }) {
 
   useEffect(() => {
     if (activeUserEmail) {
+          if (login.password.length < 6) {
+            alert("Defensive Programming Guard:\nPassword must be at least 6 characters long.");
+            return;
+          }
       fetchWalletSnapshot(activeUserEmail);
     }
   }, [activeUserEmail]);
@@ -309,35 +310,10 @@ export function AppStateProvider({ children }) {
       return;
     }
 
-    try {
-      const response = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact: login.contact,
-          password: login.password
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(`Login failed:\n${errorData.detail}`);
-        return;
-      }
-
-      const data = await response.json();
-
-      setAccess(prev => ({ ...prev, loggedIn: true }));
-      setActiveUserEmail(login.contact);
-
-      alert(data.message);
-      setLogin({ contact: '', password: '' });
-    } catch (error) {
-      console.error("Login network error:", error);
-      alert("Could not reach the backend server.");
+    if (login.contact.length > 100) {
+      alert("Defensive Programming Guard:\nLogin attempt blocked. Input length violates system schema capacity parameters.");
+      return;
     }
-<<<<<<< HEAD
-=======
 
     if (login.password.length < 6) {
       alert("Defensive Programming Guard:\nPassword must be at least 6 characters long.");
@@ -376,14 +352,12 @@ export function AppStateProvider({ children }) {
       applySessionUpdate(nextAccess, userData);
 
       alert(`Authentication Success:\nWelcome back, ${userData.name}! Your session has been restored.`);
-    
-    // Clear password memory configurations cleanly upon authorization approval
-    setLogin({ contact: '', password: '' });
+
+      setLogin({ contact: '', password: '' });
     } catch (error) {
       console.error("Authentication network exception:", error);
       alert("Could not reach the local FastAPI backend server application gateway.");
     }
->>>>>>> eb158c0 (feat: implement conditional navigation and auth route gaurds for Home and Top Up)
   };
 
   // --- 4b. LOGOUT HANDLER ---
